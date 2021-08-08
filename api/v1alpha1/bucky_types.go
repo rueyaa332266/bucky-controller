@@ -25,11 +25,15 @@ import (
 
 // BuckySpec defines the desired state of Bucky
 type BuckySpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimun=1
 
-	// Foo is an example field of Bucky. Edit Bucky_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	SeleniumNodeNumber string `json:"seleniumNodeNumber"`
+
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimun=1
+
+	NodeInstanceNumber string `json:"nodeInstanceNumber"`
 }
 
 // BuckyStatus defines the observed state of Bucky

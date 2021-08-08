@@ -1,3 +1,7 @@
 domain: k8s.io
 repo: github.com/rueyaa332266/bucky-controller
+resources:
+- group: buckycontroller
+  kind: Bucky
+  version: v1alpha1
 version: "2"

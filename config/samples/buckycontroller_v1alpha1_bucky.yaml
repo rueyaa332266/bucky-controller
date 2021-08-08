@@ -1,0 +1,7 @@
+apiVersion: buckycontroller.k8s.io/v1alpha1
+kind: Bucky
+metadata:
+  name: bucky-sample
+spec:
+  # Add fields here
+  foo: bar

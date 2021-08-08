@@ -43,8 +43,9 @@ type BuckyStatus struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
-// Bucky is the Schema for the buckies API
+// Bucky is the Schema for the buckys API
 type Bucky struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

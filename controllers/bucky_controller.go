@@ -21,6 +21,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -30,12 +31,15 @@ import (
 // BuckyReconciler reconciles a Bucky object
 type BuckyReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log      logr.Logger
+	Scheme   *runtime.Scheme
+	Recorder record.EventRecorder
 }
 
-// +kubebuilder:rbac:groups=buckycontroller.k8s.io,resources=buckies,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=buckycontroller.k8s.io,resources=buckies/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=buckycontroller.k8s.io,resources=buckys,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=buckycontroller.k8s.io,resources=buckys/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=apps,resources=developments,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func (r *BuckyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()

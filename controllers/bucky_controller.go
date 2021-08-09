@@ -21,6 +21,7 @@ import (
 
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -53,6 +54,74 @@ func (r *BuckyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if err := r.Get(ctx, req.NamespacedName, &bucky); err != nil {
 		log.Error(err, "unable to fetch Bucky")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// Create or Update deployment object which match Bucky.Spec.
+	deploymentName := "bucky-deployment"
+	deploy := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      deploymentName,
+			Namespace: req.Namespace,
+		},
+	}
+
+	// Create or Update deployment object
+	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, deploy, func() error {
+		seleniumNodeNumber := bucky.Spec.SeleniumNodeNumber
+		nodeInstanceNumber := bucky.Spec.NodeInstanceNumber
+		replicas := int32(1)
+		deploy.Spec.Replicas = &replicas
+
+		// set a label for our deployment
+		labels := map[string]string{
+			"app":        "bucky-deployment",
+			"controller": req.Name,
+		}
+
+		// set labels to spec.selector for our deployment
+		if deploy.Spec.Selector == nil {
+			deploy.Spec.Selector = &metav1.LabelSelector{MatchLabels: labels}
+		}
+
+		// set labels to template.objectMeta for our deployment
+		if deploy.Spec.Template.ObjectMeta.Labels == nil {
+			deploy.Spec.Template.ObjectMeta.Labels = labels
+		}
+
+		// set a container for our deployment
+		// !!! seleniumNodeNumber for loop the ip
+		containers := []corev1.Container{
+			{
+				Name:  "node-chrome",
+				Image: "selenium/node-chrome:latest",
+				Env: []corev1.EnvVar{
+					{
+						Name:  "NODE_MAX_INSTANCES",
+						Value: nodeInstanceNumber,
+					},
+				},
+			},
+		}
+
+		// set containers to template.spec.containers for our deployment
+		if deploy.Spec.Template.Spec.Containers == nil {
+			deploy.Spec.Template.Spec.Containers = containers
+		}
+
+		// set the owner so that garbage collection can kicks in
+		if err := ctrl.SetControllerReference(&bucky, deploy, r.Scheme); err != nil {
+			log.Error(err, "unable to set ownerReference from Bucky to Deployment")
+			return err
+		}
+
+		// end of ctrl.CreateOrUpdate
+		return nil
+	}); err != nil {
+
+		// error handling of ctrl.CreateOrUpdate
+		log.Error(err, "unable to ensure deployment is correct")
+		return ctrl.Result{}, err
+
 	}
 
 	return ctrl.Result{}, nil

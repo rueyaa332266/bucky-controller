@@ -20,6 +20,8 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -42,16 +44,46 @@ type BuckyReconciler struct {
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func (r *BuckyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
-	_ = r.Log.WithValues("bucky", req.NamespacedName)
+	ctx := context.Background()
+	log := r.Log.WithValues("bucky", req.NamespacedName)
 
-	// your logic here
+	// Load Bucky by name
+	var bucky buckycontrollerv1alpha1.Bucky
+	log.Info("fetching Bucky Resource")
+	if err := r.Get(ctx, req.NamespacedName, &bucky); err != nil {
+		log.Error(err, "unable to fetch Bucky")
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
 
 	return ctrl.Result{}, nil
 }
 
+var (
+	deploymentOwnerKey = ".metadata.controller"
+	apiGVStr           = buckycontrollerv1alpha1.GroupVersion.String()
+)
+
 func (r *BuckyReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if err := mgr.GetFieldIndexer().IndexField(&appsv1.Deployment{}, deploymentOwnerKey, func(rawObj runtime.Object) []string {
+		// grab the deployment object, extract the owner...
+		deployment := rawObj.(*appsv1.Deployment)
+		owner := metav1.GetControllerOf(deployment)
+		if owner == nil {
+			return nil
+		}
+		// ...make sure it's a Bucky...
+		if owner.APIVersion != apiGVStr || owner.Kind != "Bucky" {
+			return nil
+		}
+
+		// ...and if so, return it
+		return []string{owner.Name}
+	}); err != nil {
+		return err
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&buckycontrollerv1alpha1.Bucky{}).
+		Owns(&appsv1.Deployment{}).
 		Complete(r)
 }

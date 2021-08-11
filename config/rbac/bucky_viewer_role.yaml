@@ -1,4 +1,4 @@
-# permissions for end users to view buckys.
+# permissions for end users to view buckies.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -7,7 +7,7 @@ rules:
 - apiGroups:
   - buckycontroller.k8s.io
   resources:
-  - buckys
+  - buckies
   verbs:
   - get
   - list
@@ -15,6 +15,6 @@ rules:
 - apiGroups:
   - buckycontroller.k8s.io
   resources:
-  - buckys/status
+  - buckies/status
   verbs:
   - get

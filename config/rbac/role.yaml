@@ -1,9 +1,29 @@
-# permissions for end users to edit buckies.
+
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: bucky-editor-role
+  creationTimestamp: null
+  name: manager-role
 rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - apps
+  resources:
+  - developments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - update
+  - watch
 - apiGroups:
   - buckycontroller.k8s.io
   resources:
@@ -22,3 +42,5 @@ rules:
   - buckies/status
   verbs:
   - get
+  - patch
+  - update

@@ -3,5 +3,5 @@ kind: Bucky
 metadata:
   name: bucky-sample
 spec:
-  # Add fields here
-  foo: bar
+  seleniumNodeNumber: "3"
+  nodeInstanceNumber: "3"

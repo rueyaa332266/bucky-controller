@@ -149,14 +149,10 @@ func (r *BuckyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 
 		// set containers to template.spec.containers for our deployment
-		if deploy.Spec.Template.Spec.Containers == nil {
-			deploy.Spec.Template.Spec.Containers = containers
-		}
+		deploy.Spec.Template.Spec.Containers = containers
 
 		// set containers to template.spec.containers for our deployment
-		if deploy.Spec.Template.Spec.Volumes == nil {
-			deploy.Spec.Template.Spec.Volumes = volumes
-		}
+		deploy.Spec.Template.Spec.Volumes = volumes
 
 		// set the owner so that garbage collection can kicks in
 		if err := ctrl.SetControllerReference(&bucky, deploy, r.Scheme); err != nil {

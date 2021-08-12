@@ -25,6 +25,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -43,6 +44,7 @@ type BuckyReconciler struct {
 // +kubebuilder:rbac:groups=buckycontroller.k8s.io,resources=buckies,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=buckycontroller.k8s.io,resources=buckies/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=apps,resources=developments,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func (r *BuckyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
@@ -66,18 +68,26 @@ func (r *BuckyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		},
 	}
 
+	serviceName := "bucky-service"
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      serviceName,
+			Namespace: req.Namespace,
+		},
+	}
+
+	// set a label for deployment and service
+	labels := map[string]string{
+		"app":        "bucky-deployment",
+		"controller": req.Name,
+	}
+
 	// Create or Update deployment object
 	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, deploy, func() error {
 		seleniumNodeNumber, _ := strconv.Atoi(bucky.Spec.SeleniumNodeNumber)
 		nodeInstanceNumber := bucky.Spec.NodeInstanceNumber
 		replicas := int32(1)
 		deploy.Spec.Replicas = &replicas
-
-		// set a label for our deployment
-		labels := map[string]string{
-			"app":        "bucky-deployment",
-			"controller": req.Name,
-		}
 
 		// set labels to spec.selector for our deployment
 		if deploy.Spec.Selector == nil {
@@ -164,6 +174,43 @@ func (r *BuckyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	}
 
+	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, svc, func() error {
+
+		// set labels to spec.Selector for our service
+		if svc.Spec.Selector == nil {
+			svc.Spec.Selector = labels
+		}
+
+		// set labels to spec.Ports for our service
+		if svc.Spec.Ports == nil {
+			svc.Spec.Ports = []corev1.ServicePort{
+				{
+					Port:       4444,
+					TargetPort: intstr.IntOrString{IntVal: 4444},
+				},
+			}
+		}
+
+		// set labels to spec.Typr for our service
+		if svc.Spec.Type == "" {
+			svc.Spec.Type = "NodePort"
+		}
+
+		// set the owner so that garbage collection can kicks in
+		if err := ctrl.SetControllerReference(&bucky, svc, r.Scheme); err != nil {
+			log.Error(err, "unable to set ownerReference from Bucky to Service")
+			return err
+		}
+
+		// end of ctrl.CreateOrUpdate
+		return nil
+	}); err != nil {
+		// error handling of ctrl.CreateOrUpdate
+		log.Error(err, "unable to ensure service is correct")
+		return ctrl.Result{}, err
+
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -194,5 +241,6 @@ func (r *BuckyReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&buckycontrollerv1alpha1.Bucky{}).
 		Owns(&appsv1.Deployment{}).
+		Owns(&corev1.Service{}).
 		Complete(r)
 }

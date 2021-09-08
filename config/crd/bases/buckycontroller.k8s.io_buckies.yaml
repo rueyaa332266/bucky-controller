@@ -36,11 +36,19 @@ spec:
         spec:
           description: BuckySpec defines the desired state of Bucky
           properties:
+            buckyCommand:
+              type: string
+            buckyCoreImage:
+              type: string
             nodeInstanceNumber:
-              type: string
+              minimum: 1
+              type: integer
             seleniumNodeNumber:
-              type: string
+              minimum: 1
+              type: integer
           required:
+          - buckyCommand
+          - buckyCoreImage
           - nodeInstanceNumber
           - seleniumNodeNumber
           type: object

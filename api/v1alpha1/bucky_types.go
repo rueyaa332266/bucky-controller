@@ -26,14 +26,24 @@ import (
 // BuckySpec defines the desired state of Bucky
 type BuckySpec struct {
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Minimun=1
+	// +kubebuilder:validation:Minimum=1
 
-	SeleniumNodeNumber string `json:"seleniumNodeNumber"`
+	SeleniumNodeNumber int `json:"seleniumNodeNumber"`
 
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Minimun=1
+	// +kubebuilder:validation:Minimum=1
 
-	NodeInstanceNumber string `json:"nodeInstanceNumber"`
+	NodeInstanceNumber int `json:"nodeInstanceNumber"`
+
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Formate:=string
+
+	BuckyCoreImage string `json:"buckyCoreImage"`
+
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Formate:=string
+
+	BuckyCommand string `json:"buckyCommand"`
 }
 
 // BuckyStatus defines the observed state of Bucky

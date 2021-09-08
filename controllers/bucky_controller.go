@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
@@ -84,10 +85,13 @@ func (r *BuckyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// Create or Update deployment object
 	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, deploy, func() error {
-		seleniumNodeNumber, _ := strconv.Atoi(bucky.Spec.SeleniumNodeNumber)
+		seleniumNodeNumber := bucky.Spec.SeleniumNodeNumber
 		nodeInstanceNumber := bucky.Spec.NodeInstanceNumber
+		BuckyCoreImage := bucky.Spec.BuckyCoreImage
+		BuckyCommand := bucky.Spec.BuckyCommand
 		replicas := int32(1)
 		deploy.Spec.Replicas = &replicas
+		var rootuser int64 = 0
 
 		// set labels to spec.selector for our deployment
 		if deploy.Spec.Selector == nil {
@@ -105,6 +109,19 @@ func (r *BuckyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				Name:  "selenium-hub",
 				Image: "selenium/hub:latest",
 			},
+			{
+				Name:            "bucky-test-script",
+				Image:           BuckyCoreImage,
+				ImagePullPolicy: "IfNotPresent",
+				Command:         strings.Split(BuckyCommand, " "),
+				Env: []corev1.EnvVar{
+					{
+						Name:  "E2E_PARALLEL_NUM",
+						Value: strconv.Itoa(nodeInstanceNumber),
+					},
+				},
+				SecurityContext: &corev1.SecurityContext{RunAsUser: &rootuser, RunAsGroup: &rootuser},
+			},
 		}
 
 		// same ip now
@@ -119,7 +136,7 @@ func (r *BuckyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				Env: []corev1.EnvVar{
 					{
 						Name:  "NODE_MAX_INSTANCES",
-						Value: nodeInstanceNumber,
+						Value: strconv.Itoa(nodeInstanceNumber),
 					},
 					{
 						Name:  "HUB_HOST",

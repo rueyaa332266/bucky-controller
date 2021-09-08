@@ -3,5 +3,7 @@ kind: Bucky
 metadata:
   name: bucky-sample
 spec:
-  seleniumNodeNumber: "3"
-  nodeInstanceNumber: "3"
+  seleniumNodeNumber: 3
+  nodeInstanceNumber: 3
+  buckyCoreImage: "bc:latest"
+  buckyCommand: "bucky run -t e2e -d"

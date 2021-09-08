@@ -5,5 +5,5 @@ metadata:
 spec:
   seleniumNodeNumber: 3
   nodeInstanceNumber: 3
-  buckyCoreImage: "bc:latest"
+  buckyCoreImage: "bc-sample:latest"
   buckyCommand: "bucky run -t e2e -d"

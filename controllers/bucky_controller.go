@@ -26,7 +26,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -65,14 +64,6 @@ func (r *BuckyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	deploy := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      deploymentName,
-			Namespace: req.Namespace,
-		},
-	}
-
-	serviceName := "bucky-service"
-	svc := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      serviceName,
 			Namespace: req.Namespace,
 		},
 	}
@@ -183,43 +174,6 @@ func (r *BuckyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 		// error handling of ctrl.CreateOrUpdate
 		log.Error(err, "unable to ensure deployment is correct")
-		return ctrl.Result{}, err
-
-	}
-
-	if _, err := ctrl.CreateOrUpdate(ctx, r.Client, svc, func() error {
-
-		// set labels to spec.Selector for our service
-		if svc.Spec.Selector == nil {
-			svc.Spec.Selector = labels
-		}
-
-		// set labels to spec.Ports for our service
-		if svc.Spec.Ports == nil {
-			svc.Spec.Ports = []corev1.ServicePort{
-				{
-					Port:       4444,
-					TargetPort: intstr.IntOrString{IntVal: 4444},
-				},
-			}
-		}
-
-		// set labels to spec.Typr for our service
-		if svc.Spec.Type == "" {
-			svc.Spec.Type = "NodePort"
-		}
-
-		// set the owner so that garbage collection can kicks in
-		if err := ctrl.SetControllerReference(&bucky, svc, r.Scheme); err != nil {
-			log.Error(err, "unable to set ownerReference from Bucky to Service")
-			return err
-		}
-
-		// end of ctrl.CreateOrUpdate
-		return nil
-	}); err != nil {
-		// error handling of ctrl.CreateOrUpdate
-		log.Error(err, "unable to ensure service is correct")
 		return ctrl.Result{}, err
 
 	}

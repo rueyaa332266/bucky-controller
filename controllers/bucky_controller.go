@@ -108,7 +108,7 @@ func (r *BuckyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				Env: []corev1.EnvVar{
 					{
 						Name:  "E2E_PARALLEL_NUM",
-						Value: strconv.Itoa(nodeInstanceNumber),
+						Value: strconv.Itoa(nodeInstanceNumber * seleniumNodeNumber),
 					},
 				},
 				SecurityContext: &corev1.SecurityContext{RunAsUser: &rootuser, RunAsGroup: &rootuser},

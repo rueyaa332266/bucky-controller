@@ -62,7 +62,7 @@ make install
 
 3. Deploy Bucky-controller into the cluster.
 ```
-export IMG=aa332266/bucky-controller:kubebuilder
+export IMG=aa332266/bucky-controller:latest
 make deploy
 ```
 

@@ -68,7 +68,7 @@ func (r *BuckyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		},
 	}
 
-	// set a label for deployment and service
+	// set a label for deployment
 	labels := map[string]string{
 		"app":        "bucky-deployment",
 		"controller": req.Name,
@@ -130,15 +130,23 @@ func (r *BuckyReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 						Value: strconv.Itoa(nodeInstanceNumber),
 					},
 					{
-						Name:  "HUB_HOST",
+						Name:  "SE_EVENT_BUS_HOST",
 						Value: "localhost",
 					},
 					{
-						Name:  "HUB_PORT",
+						Name:  "SE_HUB_PORT",
 						Value: "4444",
 					},
 					{
-						Name:  "NODE_PORT",
+						Name:  "SE_EVENT_BUS_SUBSCRIBE_PORT",
+						Value: "4443",
+					},
+					{
+						Name:  "SE_EVENT_BUS_PUBLISH_PORT",
+						Value: "4442",
+					},
+					{
+						Name:  "SE_NODE_PORT",
 						Value: strconv.Itoa(5555 + i),
 					},
 				},
